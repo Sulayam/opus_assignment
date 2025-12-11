@@ -1,0 +1,239 @@
+Before you give me every single node and how they work togther in th workflow. I want you to first understand that there are nodes in opus where in each node has its own functionality. Within each node, theres the input then the logic and then the output. Please look through all of the below and give me a new workflow by using the appropriate nodes in the right places.
+
+These are the main parent nodes- Agent,Review, Execute Workflow, Data.
+Under Agent we have some child nodes Opus Agent, Custom Agent, Opus Human Task, Decision Agent, Human Decision Agent, Opus Code, Expert
+```
+Input
+
+Opus Agent  ✏️        ⚡ Run          Output
+
+Objective
+Objective
+
+Description
+Description
+
+Required Steps
+1. Objective
+Objective
+
+Description
+Description
+
+Basic      Switch to Advanced
+
+Describe what you want to change    →
+```
+
+```
+Input
+
+Custom Agent  ✏️
+Our Advanced LLM Agent for Opus         ⚡ Run        Output
+
+Model
+GPT-4o Mini
+
+Prompt
+
+
+System Prompt
+Be very concise and clear. Use bullet points if possible.
+
+Temperature
+0
+
+Agent Response
+Output for completion
+Text
+```
+
+```
+Input
+
+Opus Human Task  ✏️
+Opus human task             ⚡ Run            Output
+
+Task Guidance
+
+
+Deadline (In Hours)
+24
+```
+
+```
+Input
+
+Decision Agent  ✏️
+Conditional Flow for Opus          ⚡ Run          Output
+
+Condition 1                               Natural Language ⭘
+Logical Expression
+
+Source
+Operation
+Value
+
++ Add Condition
+
+Final Decision
+True / False
+
+Condition 1
+True / False
+```
+
+```
+Input
+
+Human Decision Agent  ✏️
+Human Conditional Flow for Opus         ⚡ Run        Output
+
+Deadline (In Hours)
+24
+
+Condition 1                               Logical Expression ⭘
+Natural Language
+Write your decision rule in natural language
+
++ Add Condition
+
+Final Decision
+True / False
+
+Condition 1
+True / False
+```
+
+Input
+
+Opus Code  ✏️
+Write your own code for a task                 ⚡ Run            Output
+
+This is a Python Code Editor (Python version 3.13)
+
+To read an Input Variable, use my_value = {{ input_variable_name }}
+ℹ️ Input variables are read-only
+
+To write to an output variable, use {{ output_variable_name }} = my_value
+This sends data out from your code.
+
+Code
+<place code here>
+
+Now that agents are done, we have the next parent node- review
+Review
+
+Opus supports human and agentic reviews
+
+Review Type
+
+👤 Human Review
+
+⚠️ Help your fellow human by providing guidance on what to review in your task
+
+⚠️ Your Human Reviews will appear in the Opus Platform here
+
+Review Guidance
+
+
+Deadline (In Hours)
+
+
+After review node we have Execute Workflow node
+Execute Workflow
+Execute another workflow
+
+Only active workflows without Human Reviews, Human Tasks
+and Human Decision nodes can be used for Sub-Workflow
+Execution.
+
+Input and output values come from the Workflow Input and
+Output nodes.
+
+❗️ To make changes to these values, please edit the original
+workflow.
+
+Please ensure the workflow you are calling does not lead back
+to this workflow (cyclic). Doing so may cause an infinite
+running workflow.
+
+Workflow
+
+Choose...
+
+
+The parent node Data has some child nodes Import Data, Export Data, Opus Text Extraction, External Service (Intermediate)
+```
+
+---
+
+```
+Import Data [2]
+Choose a data source
+
+Data Source
+Select
+```
+
+---
+
+```
+Export Data
+Exports data to a target system
+
+Data Source
+Select
+```
+
+---
+
+```
+Opus Text Extraction
+Performs OCR on the specified PDF document extracts
+text from each page
+
+Input
+
+File
+File
+File (single)
+
+Output
+
+Extracted Text
+Text content extracted from the file, provided as a
+list of per-page results
+List
+```
+
+---
+
+```
+External Service
+Execute an external service in Opus
+
+No Authentication
+Select Credential
+
+Endpoint
+https://api.example.com/endpoint
+
+HTTP Method
+GET
+
+Set all input variables in the Query String?
+
+Icon URL (Optional)
+
+Preview Request
+GET
+
+Request Details
+Object
+
+Service Response
+Text
+```
+
+---

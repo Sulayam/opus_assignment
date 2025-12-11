@@ -1,0 +1,71 @@
+Create a vendor onboarding workflow called Vendor Onboarding – Email to Vendor Creation that is triggered by a new vendor request email.
+The workflow receives the following inputs:
+
+raw_email_subject (string)
+
+raw_email_body (string)
+
+email_from (string)
+
+email_to (string)
+
+email_received_at (date)
+
+Step 1: Parse the email body and extract structured data into a vendor_request object containing:
+
+requestor: name, department, email, urgency
+
+vendor: company_name, entities_served, documentation_contact (name, email), authorized_contact (name, email, phone), services_products, country
+
+financials: payment_terms_days, estimated_annual_spend_usd
+
+business_justification
+
+Step 2: Validate completeness of required fields (Q1–Q5, vendor country, payment terms, estimated annual spend). If any required information is missing, send an email to the requestor listing missing fields and stop the workflow.
+
+Step 3: Generate a unique vendor_id and create an initial row in a Vendor Master Google Sheet with vendor details and status under_review. This sheet is our simulated ERP and tracking database.
+
+Step 4: In parallel, perform:
+
+Duplicate detection: call an external duplicate-check API with vendor_name and country. If it returns exact_match, update the sheet with duplicate_status and reject the request with an email to the requestor. If it returns possible_match, mark duplicate_status as possible_match and include the matches later in escalation.
+
+Country document requirements: lookup a CountryDocumentMatrix Google Sheet using vendor country, and build a list of required documents including the universal Vendor Master Form and any country-specific documents.
+
+Compliance verification: call an external compliance/check API with vendor_name and country. Record the compliance_status in the Vendor Master sheet. If the vendor is flagged or needs_review, treat this as higher risk in the escalation.
+
+Step 5: After the parallel tasks complete, evaluate escalation logic:
+
+If payment terms < 45 days, always escalate to Sourcing.
+
+If payment terms ≥ 45 days and estimated spend > 100000 USD, escalate to Sourcing.
+
+If payment terms ≥ 90 days, always allowed.
+
+If payment terms ≥ 45 days and estimated spend ≤ 100000 USD, allowed.
+Include duplicate_status and compliance_status as additional reasons to escalate when they are possible_match or not clear.
+
+Step 6: If escalation is required, create a human approval task for the Sourcing Manager. The approval view must show vendor name, country, payment terms, estimated spend, duplicate findings, compliance status, urgency, and the requestor’s business justification. The manager can Approve, Reject, or Request More Information.
+
+If Reject: update Vendor Master status to rejected and notify the requestor.
+
+If Request More Information: notify the requestor describing what is needed and end the workflow.
+
+If Approve: continue to document collection.
+
+Step 7: For allowed or approved vendors, send an email to the vendor documentation contact (and optionally the authorized contact) listing all required documents from the CountryDocumentMatrix, including the universal Vendor Master Form and any country-specific items (for example, Singapore requires GST Registration Certificate and ACRA Business Registration Certificate, and Australia requires ABN Registration Certificate and GST Registration Evidence). Mark the Vendor Master status as awaiting_docs.
+
+Assume that vendor documents will be uploaded into Opus using file upload inputs and stored via the Job Operator file upload API. The workflow should be prepared to receive a list of file URLs for the vendor and pass these, along with vendor_id and the required document list, to an external Document Verification Service.
+
+Step 8: Call an external document/verify API with vendor_id, country, required_documents, and submitted document URLs. If the service returns complete, mark the document_verification_status as complete. If it returns partial, send an email to the vendor listing missing documents and either loop back to wait for resubmission or end with a partial status. If it returns failed, reject the onboarding and notify both vendor and requestor.
+
+Step 9: When documents are complete and either no escalation was required or the Sourcing Manager approved, finalize the vendor:
+
+Update the Vendor Master sheet with status approved.
+
+Send a multi-recipient email to the Master Data Team and Procurement confirming the new vendor creation, with vendor_name and vendor_id.
+
+Send a welcome email to the vendor confirming they are an approved vendor.
+
+Send a final status email to the requestor with the outcome and the vendor_id.
+
+Use the Opus job audit log as the system of record for the detailed execution trail, and the Vendor Master sheet status column as the high level tracking view. Make sure the workflow makes use of parallel branches for duplicate detection, document requirement lookup, and compliance checks to reduce overall turnaround time.
