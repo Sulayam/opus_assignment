@@ -2,3 +2,4 @@ fastapi
 uvicorn
 sqlite3
 pydantic
+python-slugify==8.0.1   

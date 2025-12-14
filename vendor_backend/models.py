@@ -40,9 +40,10 @@ def insert_vendor(vendor: dict):
             country,
             annual_spend,
             payment_terms,
-            created_at
+            created_at,
+            status
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         vendor.get("vendor_id"),
         vendor.get("vendor_company_name"),
@@ -50,7 +51,8 @@ def insert_vendor(vendor: dict):
         vendor.get("country"),
         vendor.get("annual_spend"),
         vendor.get("payment_terms"),
-        vendor.get("created_at")
+        vendor.get("created_at"),
+        vendor.get("status")
     ))
 
     conn.commit()

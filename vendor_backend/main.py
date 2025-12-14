@@ -2,6 +2,13 @@ from fastapi import FastAPI, HTTPException  # type: ignore
 from models import insert_log, insert_vendor, find_vendor_by_name
 from database import init_db
 from datetime import datetime
+from compliance import run_compliance, required_docs_for_country
+from documents.schemas import (
+    DocumentRequirementsRequest,
+    DocumentRequirementsResponse
+)
+from documents.service import get_required_documents
+
 
 app = FastAPI()
 
@@ -71,7 +78,8 @@ async def create_vendor(data: dict):
         "country": data.get("country"),
         "annual_spend": data.get("estimated_annual_spend"),
         "payment_terms": data.get("payment_terms_days"),
-        "created_at": data.get("timestamp", datetime.utcnow().isoformat())
+        "created_at": data.get("timestamp", datetime.utcnow().isoformat()),
+        "status": data.get("status", "initiated")
     }
 
     insert_vendor(vendor_row)
@@ -91,3 +99,49 @@ def check_duplicate(vendor_name: str):
         return {"duplicate": True, "existing_record": dict(existing)}
 
     return {"duplicate": False}
+
+@app.post("/compliance/check")
+async def compliance_check(payload: dict):
+    """
+    Basic compliance screening + document-matrix lookup.
+    Expects:
+    {
+        "vendor_id": "...",
+        "company_name": "...",
+        "country": "...",
+        "policy_code": "basic_sanctions"   # optional
+    }
+    """
+    required_fields = ["vendor_id", "company_name", "country"]
+    for f in required_fields:
+        if f not in payload:
+            raise HTTPException(status_code=400, detail=f"Missing {f}")
+
+    # run check
+    result = run_compliance({
+        **payload,
+        "check_type": payload.get("policy_code", "basic_sanctions"),
+        "requested_at": datetime.utcnow().isoformat()
+    })
+    return result
+
+
+@app.get("/compliance/rules/{country}")
+def compliance_rules(country: str):
+    """
+    Returns required document list for a given country.
+    """
+    return required_docs_for_country(country)
+
+@app.post("/docs/requirements", response_model=DocumentRequirementsResponse)
+async def get_document_requirements(payload: DocumentRequirementsRequest):
+    """
+    Returns country-specific document requirements for vendor onboarding.
+    """
+    required_docs = get_required_documents(payload.country)
+
+    return {
+        "vendor_id": payload.vendor_id,
+        "country": payload.country,
+        "required_documents": required_docs
+    }
