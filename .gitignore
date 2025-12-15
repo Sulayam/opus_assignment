@@ -8,3 +8,9 @@ __pycache__/
 .vscode/
 dist/
 build/
+vendor_master.db
+*.db
+*.sqlite*
+__pycache__/
+.env
+assignment_notes/
