@@ -1,5 +1,3 @@
-# documents/schemas.py
-
 from pydantic import BaseModel
 from typing import List
 
@@ -13,3 +11,9 @@ class DocumentRequirementsResponse(BaseModel):
     vendor_id: str
     country: str
     required_documents: List[str]
+
+class DocumentRequirementsResponse(BaseModel):
+    vendor_id: str
+    country: str
+    required_documents: List[str]
+    document_count: int

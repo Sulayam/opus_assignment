@@ -6,14 +6,21 @@ from .rules import POLICY_CATALOG, BASIC_SANCTIONS_LIST
 from .models import insert_compliance_log
 
 def normalize_country(country: str) -> str:
-    """Lowercase + slugified for consistent lookup."""
     return slugify(country or "")
 
 def required_docs_for_country(country: str) -> Dict[str, Any]:
     key = normalize_country(country)
+    docs = POLICY_CATALOG.get(key, []) + POLICY_CATALOG["universal"]
     return {
         "country": country,
-        "required_documents": POLICY_CATALOG.get(key, []) + POLICY_CATALOG["universal"]
+        "normalized_key": key,
+        "document_count": len(docs),
+        "required_documents": docs,
+        "note": (
+            "Defaulted to universal policy; no specific regional documents found."
+            if key not in POLICY_CATALOG
+            else "Country-specific policy applied."
+        )
     }
 
 def basic_sanctions_check(company_name: str) -> Dict[str, Any]:
@@ -54,6 +61,5 @@ def run_compliance(payload: Dict[str, Any]) -> Dict[str, Any]:
         "checked_at": datetime.utcnow().isoformat()
     }
 
-    # Persist log
     insert_compliance_log(final_result)
     return final_result

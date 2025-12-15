@@ -1,5 +1,10 @@
-from fastapi import FastAPI, HTTPException  # type: ignore
-from models import insert_log, insert_vendor, find_vendor_by_name
+from fastapi import FastAPI, HTTPException, Depends # type: ignore
+from fastapi.security import HTTPBasic, HTTPBasicCredentials # type: ignore
+import secrets
+from fastapi.responses import JSONResponse  # type: ignore
+from dotenv import load_dotenv
+import os
+from models import insert_log, insert_vendor, find_vendor_by_name, find_vendor_by_id
 from database import init_db
 from datetime import datetime
 from compliance import run_compliance, required_docs_for_country
@@ -11,6 +16,27 @@ from documents.service import get_required_documents
 
 
 app = FastAPI()
+security = HTTPBasic()
+
+
+# --------------------------------------------------
+# BASIC AUTH CONFIG
+# --------------------------------------------------
+# Load environment variables from .env file
+load_dotenv()
+
+# Access variables
+VALID_USERNAME = os.getenv('VALID_USERNAME')
+VALID_PASSWORD = os.getenv('VALID_PASSWORD')
+
+def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, VALID_USERNAME)
+    correct_password = secrets.compare_digest(credentials.password, VALID_PASSWORD)
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    return credentials.username
+
+
 
 @app.on_event("startup")
 def startup():
@@ -62,14 +88,22 @@ async def create_vendor(data: dict):
     vendor_name = data["company_name"]
     vendor_id = data["vendor_id"]
 
-    existing = find_vendor_by_name(vendor_name)
+    # heck if vendor_id already exists
+    if find_vendor_by_id(vendor_id):
+        return JSONResponse(
+            status_code=409,
+            content={"message": "Vendor ID already exists", "duplicate": True}
+        )
 
+    # Check name duplication (less strict match)
+    existing = find_vendor_by_name(vendor_name)
     if existing:
         return {
-            "message": "Vendor already exists",
+            "message": "Vendor name already exists",
             "duplicate": True,
             "existing_vendor": dict(existing)
         }
+
 
     vendor_row = {
         "vendor_id": vendor_id,
@@ -82,6 +116,7 @@ async def create_vendor(data: dict):
         "status": data.get("status", "initiated")
     }
 
+    print("Creating vendor:", vendor_row)
     insert_vendor(vendor_row)
 
     return {
@@ -143,5 +178,7 @@ async def get_document_requirements(payload: DocumentRequirementsRequest):
     return {
         "vendor_id": payload.vendor_id,
         "country": payload.country,
-        "required_documents": required_docs
+        "required_documents": required_docs,
+        "document_count": len(required_docs)
     }
+
