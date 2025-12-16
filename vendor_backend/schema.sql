@@ -47,6 +47,11 @@ CREATE TABLE IF NOT EXISTS document_logs (
     logged_at TEXT
 );
 
-CREATE TABLE IF NOT EXISTS test(
-    name TEXT
-)
+CREATE TABLE IF NOT EXISTS document_file_storage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documents_complete BOOLEAN,
+    missing_documents TEXT, -- JSON-encoded list
+    document_reviewer_notes TEXT,
+    submitted_documents_file_out TEXT,
+    document_reviewed_at TEXT -- ISO 8601 date format
+);

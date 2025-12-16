@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse  # type: ignore
 import secrets
 from dotenv import load_dotenv
 import os
-from models import insert_log, insert_vendor, find_vendor_by_name, find_vendor_by_id
+from models import insert_log, insert_vendor, find_vendor_by_name, find_vendor_by_id, insert_document_issue, insert_document_file_storage
 from database import init_db
 from datetime import datetime
 from compliance import run_compliance, required_docs_for_country
@@ -224,7 +224,6 @@ async def log_document_issue(data: dict, username: str = Depends(authenticate)):
         "logged_at": datetime.utcnow().isoformat()
     }
 
-    from models import insert_document_issue
     insert_document_issue(issue_entry)
 
     return {
@@ -233,13 +232,65 @@ async def log_document_issue(data: dict, username: str = Depends(authenticate)):
         "record": issue_entry
     }
 
+@app.post("/docs/file-storage")
+async def log_document_file_storage(data: dict, username: str = Depends(authenticate)):
+    """
+    Logs document file storage details for a vendor.
+    Expects:
+    {
+        "documents_complete": true,
+        "missing_documents": ["doc1", "doc2"],
+        "document_reviewer_notes": "Some notes",
+        "submitted_documents_file_out": "file_path_or_blob",
+        "document_reviewed_at": "2025-12-16T00:00:00"
+    }
+    """
+    required_fields = ["documents_complete", "missing_documents", "document_reviewer_notes", "submitted_documents_file_out", "document_reviewed_at"]
+    for field in required_fields:
+        if field not in data:
+            raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+
+    storage_entry = {
+        "documents_complete": data["documents_complete"],
+        "missing_documents": data["missing_documents"],
+        "document_reviewer_notes": data["document_reviewer_notes"],
+        "submitted_documents_file_out": data["submitted_documents_file_out"],
+        "document_reviewed_at": data["document_reviewed_at"]
+    }
+
+    insert_document_file_storage(storage_entry)
+
+    return {
+        "message": "Document file storage logged successfully",
+        "logged_by": username,
+        "record": storage_entry
+    }
+
 @app.post("/test")
 async def test_endpoint(data: dict, username: str = Depends(authenticate)):
     """
-    Test endpoint to verify authentication and data reception.
+    Test endpoint to verify authentication and data reception using POST request in Opus platform's External Service node
     """
     return {
         "message": "Test endpoint reached successfully",
         "user": username,
+        "received_data": data
+    }
+
+from fastapi import Request
+
+@app.post("/test")
+async def test_endpoint(
+    data: dict,
+    request: Request,
+    credentials: HTTPBasicCredentials = Depends(security)
+):
+    print("RAW AUTH HEADER:", request.headers.get("authorization"))
+    print("USERNAME:", credentials.username)
+    print("PASSWORD:", credentials.password)
+
+    return {
+        "message": "Reached",
+        "user": credentials.username,
         "received_data": data
     }

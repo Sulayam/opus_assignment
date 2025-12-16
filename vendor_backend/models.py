@@ -117,3 +117,27 @@ def insert_document_issue(issue: dict):
 
     conn.commit()
     conn.close()
+
+def insert_document_file_storage(storage_entry: dict):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO document_file_storage (
+            documents_complete,
+            missing_documents,
+            document_reviewer_notes,
+            submitted_documents_file_out,
+            document_reviewed_at
+        )
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        storage_entry.get("documents_complete"),
+        json.dumps(storage_entry.get("missing_documents", [])),
+        storage_entry.get("document_reviewer_notes"),
+        storage_entry.get("submitted_documents_file_out"),
+        storage_entry.get("document_reviewed_at")
+    ))
+
+    conn.commit()
+    conn.close()
