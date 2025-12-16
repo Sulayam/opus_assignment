@@ -87,3 +87,33 @@ def find_vendor_by_id(vendor_id: str):
     row = cur.fetchone()
     conn.close()
     return row
+
+def insert_document_issue(issue: dict):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO document_issues (
+            vendor_id,
+            vendor_company_name,
+            requestor_email,
+            doc_contact_email,
+            issue_type,
+            issue_details,
+            status,
+            logged_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        issue.get("vendor_id"),
+        issue.get("vendor_company_name"),
+        issue.get("requestor_email"),
+        issue.get("doc_contact_email"),
+        issue.get("issue_type", "missing_documents"),
+        json.dumps(issue.get("issue_details", {})),
+        issue.get("status", "rejected"),
+        issue.get("logged_at")
+    ))
+
+    conn.commit()
+    conn.close()

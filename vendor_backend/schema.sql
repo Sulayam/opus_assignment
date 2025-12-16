@@ -34,3 +34,19 @@ CREATE TABLE IF NOT EXISTS compliance_logs (
     details           TEXT,      -- free-form JSON blob
     checked_at        TEXT
 );
+
+CREATE TABLE IF NOT EXISTS document_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vendor_id TEXT,
+    vendor_company_name TEXT,
+    requestor_email TEXT,
+    doc_contact_email TEXT,
+    issue_type TEXT,              -- e.g. "missing_documents", "invalid_format", "incomplete_upload"
+    issue_details TEXT,           -- free-form JSON
+    status TEXT,                  -- e.g. "rejected", "pending_reupload"
+    logged_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS test(
+    name TEXT
+)
