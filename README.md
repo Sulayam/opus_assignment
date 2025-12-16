@@ -44,7 +44,6 @@ The focus of this repository is **integration realism, auditability, and separat
 │   ├── schemas.py
 │   └── service.py
 ├── schema.sql              # Database schema
-├── vendor_master.db        # SQLite database (local development)
 ├── requirements.txt
 ```
 
