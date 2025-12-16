@@ -1,8 +1,3 @@
-Below is a **clean, professional `README.md`** you can add directly to the repository.
-No emojis. No fluff. Interview-appropriate.
-
----
-
 # Vendor Onboarding Workflow – Opus Lab Assignment
 
 ## Overview
